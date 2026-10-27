@@ -1,0 +1,1 @@
+- [Gotecx POS scope](gotecx-product-scope.md) — Liberia-first, LRD default; keep the current phase frontend-only until database work is requested.

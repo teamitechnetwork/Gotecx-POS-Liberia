@@ -1,0 +1,396 @@
+/* Keep the POS legible without changing its existing visual hierarchy. */
+html {
+  font-size: 17px;
+}
+
+.app-frame .nav-caption {
+  font-size: 12px;
+}
+
+.app-frame .nav-link {
+  font-size: 14px;
+}
+
+.app-frame .nav-count {
+  font-size: 13px;
+}
+
+.app-frame .topbar-left,
+.app-frame .searchbar input {
+  font-size: 15px;
+}
+
+.app-frame .button {
+  font-size: 14px;
+}
+
+.app-frame .button.small {
+  font-size: 13px;
+}
+
+.app-frame .page-subtitle {
+  font-size: 14px;
+}
+
+.app-frame .panel-title {
+  font-size: 17px;
+}
+
+.app-frame .stat-label {
+  font-size: 15px;
+}
+
+.app-frame .stat-note {
+  font-size: 13px;
+}
+
+.app-frame th {
+  font-size: 12px;
+}
+
+.app-frame td {
+  font-size: 14px;
+}
+
+.app-frame .badge {
+  font-size: 12px;
+}
+
+.app-frame .field label {
+  font-size: 13px;
+}
+
+.app-frame .field input,
+.app-frame .field select,
+.app-frame .field textarea {
+  font-size: 15px;
+}
+
+.app-frame .field-hint,
+.app-frame .panel-kicker,
+.app-frame .support-section-head p,
+.app-frame .support-topic p,
+.app-frame .support-local-caption {
+  font-size: 13px;
+}
+
+.app-frame .support-topic-toggle strong,
+.app-frame .support-contact-card strong {
+  font-size: 14px;
+}
+
+.app-frame .support-contact-card p {
+  font-size: 12px;
+}
+
+.app-frame .empty-state p,
+.app-frame .cart-row {
+  font-size: 15px;
+}
+
+.app-frame .callout {
+  font-size: 14px;
+}
+
+.auth-form h2 {
+  font-size: 27px;
+}
+
+.auth-form > p,
+.auth-switch {
+  font-size: 15px;
+}
+
+.auth-form .field label {
+  font-size: 14px;
+}
+
+.auth-form .field input,
+.auth-form .field select {
+  font-size: 15px;
+}
+
+.auth-switch button,
+.auth-owner-switch {
+  font-size: 14px;
+}
+
+.local-demo-note {
+  font-size: 12px;
+}
+
+.form-error {
+  font-size: 13px;
+}
+
+.auth-footer {
+  font-size: 12px;
+}
+
+/* The login view stays inside the viewport. On short screens, only the form
+   card scrolls, so the whole page does not jump or gain a document scrollbar. */
+.auth-page-login {
+  height: 100dvh;
+  min-height: 100dvh;
+  grid-template-rows: minmax(0, 1fr) auto;
+  row-gap: clamp(8px, 2vh, 20px);
+  padding-block: clamp(14px, 3vh, 40px);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.auth-page-login .auth-story {
+  min-height: 0;
+}
+
+.auth-page-login .auth-card {
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.auth-page-login .auth-footer {
+  grid-column: 2;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-height: 680px) and (min-width: 681px) {
+  .auth-page-login {
+    row-gap: 8px;
+    padding-block: 12px;
+  }
+
+  .auth-page-login .auth-illustration {
+    display: none;
+  }
+
+  .auth-page-login .auth-story-copy {
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 680px) {
+  .auth-page-login {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(8px, 1.5vh, 14px);
+    padding: 12px 16px;
+  }
+
+  .auth-page-login::before {
+    height: 245px;
+  }
+
+  .auth-page-login .auth-story {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 0 5px;
+  }
+
+  .auth-page-login .auth-story-copy {
+    font-size: clamp(20px, 5.5vw, 25px);
+    line-height: 1.1;
+    margin: 10px 0 3px;
+  }
+
+  .auth-page-login .auth-story-note {
+    font-size: 12px;
+  }
+
+  .auth-page-login .auth-card {
+    flex: 0 1 auto;
+    width: min(460px, 100%);
+    max-height: none;
+    margin: 0 auto;
+  }
+
+  .auth-page-login .auth-footer {
+    grid-column: auto;
+    flex: 0 0 auto;
+    margin: 0 auto;
+  }
+}
+
+@media (max-height: 700px) and (max-width: 680px) {
+  .auth-page-login {
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .auth-page-login .auth-story-copy,
+  .auth-page-login .auth-story-note {
+    display: none;
+  }
+
+  .auth-page-login .auth-card {
+    padding: 18px;
+  }
+
+  .auth-page-login::before {
+    height: 145px;
+  }
+}
+
+/* Keep the sign-in card compact without changing the left brand panel. */
+.auth-page-login .auth-card {
+  width: min(440px, 100%);
+  padding: 24px 28px;
+  max-height: none;
+  overflow: visible;
+}
+
+.auth-page-login .auth-brand {
+  margin-bottom: 18px;
+}
+
+.auth-page-login .auth-form h2 {
+  margin-bottom: 4px;
+  font-size: 25px;
+  line-height: 1.15;
+}
+
+.auth-page-login .auth-form > p {
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.auth-page-login .auth-form .field {
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.auth-page-login .auth-form .field input,
+.auth-page-login .auth-form .field select {
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.auth-page-login .auth-form .auth-submit {
+  min-height: 44px;
+  margin-top: 2px;
+}
+
+.auth-page-login .auth-divider {
+  margin: 12px 0;
+}
+
+.auth-page-login .local-demo-note {
+  gap: 8px;
+  margin-top: 13px;
+  padding: 9px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.auth-page-login .auth-footer {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.auth-role-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid #e2e9e2;
+  border-radius: 9px;
+  background: #f4f7f4;
+}
+
+.auth-role-switch button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #647267;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.auth-role-switch button[aria-pressed='true'] {
+  background: #fff;
+  color: #236a3b;
+  box-shadow: 0 1px 3px #1028191a;
+}
+
+.auth-role-switch button:focus-visible {
+  outline: 3px solid #2ea82755;
+  outline-offset: 2px;
+}
+
+.auth-page-login .staff-signin-form {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.auth-staff-empty {
+  margin: 0 0 16px;
+  padding: 12px 13px;
+  border: 1px solid #dce8dd;
+  border-radius: 8px;
+  background: #f4f8f4;
+  color: #5f6f63;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.auth-staff-empty strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #2c4032;
+}
+
+.auth-staff-empty p {
+  margin: 0;
+  font-size: 12px;
+}
+
+@media (max-width: 680px) {
+  .auth-page-login .auth-card {
+    padding: 20px;
+  }
+}
+
+@media (max-height: 700px) and (max-width: 680px) {
+  .auth-page-login .auth-card {
+    padding: 16px 18px;
+  }
+}
+
+.auth-story-highlight {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  color: #83ceff;
+  animation: gotecx-headline-in 700ms ease-out both;
+}
+
+@keyframes gotecx-headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-story-highlight {
+    animation: none;
+  }
+}

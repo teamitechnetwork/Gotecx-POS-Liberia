@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Gotecx POS"
+description = "A Liberia-focused point-of-sale and store-management app for independent retailers, covering sales, inventory, purchasing, customers, staff, receipts, and cash shifts."
+version = "1.0.0"
+id = "artifacts/gotecx-pos"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25947
+
+[services.development]
+run = "pnpm --filter @workspace/gotecx-pos run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gotecx-pos", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/gotecx-pos/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25947"
+BASE_PATH = "/"

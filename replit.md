@@ -1,6 +1,6 @@
-# [Project name]
+# Gotecx POS
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A Liberia-focused, browser-based point-of-sale and business management frontend for store owners, managers, and cashiers. Imported from `teamitechnetwork/Gotecx-POS`; this Replit version is frontend-only.
 
 ## Run & Operate
 
@@ -22,15 +22,20 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/gotecx-pos` — Gotecx POS web application
+- `artifacts/api-server` — shared API starter; not used by the current frontend-only POS
+- `lib/api-spec` and `lib/db` — workspace starters; no POS database schema is configured
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- POS demo data and account flows remain in the browser until the user requests backend work.
+- No database is to be created or configured as part of the current frontend scope.
+- Keep Liberia as the primary market, with LRD as the default and USD supported.
+- Preserve the Gotecx green (#2ea827) and use Inter as the app font.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+The app supports store operations including sales, inventory, purchasing, customers, staff, receipts, cash shifts, analytics, and support. Browser-local demo authentication and staff permissions are not production-secure or shared across devices.
 
 ## User preferences
 
@@ -38,7 +43,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Manager/cashier PINs and role restrictions implemented in the frontend are demo behavior only; enforce them on a server before production use.
+- Do not provision or migrate a database unless the user explicitly asks to begin that later phase.
 
 ## Pointers
 
