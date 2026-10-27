@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import PurchasingPage from '@/pages/purchasing';
 import AdvancedInventory from '@/pages/advanced-inventory';
+import NotificationsPage from '@/pages/notifications';
+import ProPaymentMethods from '@/pages/pro-payment-methods';
+import ReportsPage from '@/pages/reports';
 import type {
   OpenForm,
   Product,
@@ -18,7 +21,7 @@ import type {
 
 type Customer = { id:string; name:string; phone:string; email:string; county:string; notes:string; createdAt?:string };
 type SaleItem = { productId:string; name:string; quantity:number; unitPrice:number };
-type Order = { id:string; createdAt:string; customerId:string|null; items:SaleItem[]; subtotal:number; discount:number; total:number; currency:'LRD'|'USD'; paymentMethod:string; status:'completed'|'refunded'; discountCode?:string; taxAmount?:number; deliveryFee?:number; fulfillment?:'pickup'|'delivery'; refundedAt?:string; refundReason?:string };
+type Order = { id:string; createdAt:string; customerId:string|null; items:SaleItem[]; subtotal:number; discount:number; total:number; currency:'LRD'|'USD'; paymentMethod:string; status:'completed'|'refunded'; discountCode?:string; taxAmount?:number; deliveryFee?:number; fulfillment?:'pickup'|'delivery'; refundedAt?:string; refundReason?:string; employeeId?:string };
 type Discount = { id:string; name:string; code:string; type:'percent'|'fixed'; value:number; active:boolean; startsAt:string; endsAt:string };
 type TeamMember = { id:string; name:string; email:string; role:'owner'|'manager'|'cashier'; pin?:string; permissions?:string[] };
 type Business = { id:string; name:string; category:string; country:'Liberia'; county:string; city:string; currency:'LRD'|'USD'; timezone:'Africa/Monrovia' };
@@ -37,14 +40,26 @@ const navMain = [
   ['Growth','/growth',Activity], ['Discounts','/discounts',Tag], ['Content','/content',FileText], ['Markets','/markets',Globe2],
   ['Finance','/finance',Wallet], ['Analytics','/analytics',BarChart3], ['Team','/team',Users],
 ];
+const reportNavItems = [
+  ['Sales summary','/reports/sales-summary'],
+  ['Sales by item','/reports/sales-by-item'],
+  ['Sales by category','/reports/sales-by-category'],
+  ['Sales by employee','/reports/sales-by-employee'],
+  ['Sales by payment type','/reports/sales-by-payment-type'],
+  ['Receipts','/reports/receipts'],
+  ['Sales by modifier','/reports/sales-by-modifier'],
+  ['Discounts','/reports/discounts'],
+  ['Taxes','/reports/taxes'],
+] as const;
 const settingsItems = ['General','Plan','Billing','Users','Payments','Checkout','Receipts','Customer accounts','Shipping and delivery','Taxes and duties','Locations','Markets','Apps','Sales channels','Domains','Notifications'];
 const permissionPages = [
   ['/home','Home'],['/orders','Orders'],['/cash-register','Cash register'],['/products','Products'],['/purchases','Purchasing'],['/inventory','Advanced Inventory'],['/customers','Customers'],
   ['/growth','Growth'],['/discounts','Discounts'],['/content','Content'],['/markets','Markets'],['/finance','Finance'],['/analytics','Analytics'],['/team','Team'],['/settings','Settings'],['/support','Support'],
+  ['/reports','Reports'],['/notifications','Notifications'],
 ] as const;
 const roleDefaults:Record<'manager'|'cashier',string[]> = {
-  manager:['/home','/orders','/cash-register','/products','/purchases','/inventory','/customers','/growth','/discounts','/content','/markets','/finance','/analytics','/support'],
-  cashier:['/home','/orders','/cash-register','/customers','/support'],
+  manager:['/home','/orders','/cash-register','/products','/purchases','/inventory','/customers','/growth','/discounts','/content','/markets','/finance','/analytics','/support','/reports','/notifications'],
+  cashier:['/home','/orders','/cash-register','/customers','/support','/notifications'],
 };
 const demoProducts:Product[] = [
   {id:'p1',name:'Liberian Coffee · 250g',sku:'COF-025',category:'Pantry',price:1150,currency:'LRD',stock:23,lowStockThreshold:6,active:true},
@@ -99,9 +114,9 @@ const shiftCashSummary = (store:Store,shift:CashShift) => {
   return {cashSales,cashRefunds,expectedCash:shift.openingCash+cashSales-cashRefunds};
 };
 const memberCanOpen=(store:Store,memberId:string,route:string)=>{
-  if(route==='/home')return true;
+  if(route==='/home'||route==='/notifications')return true;
   const member=store.team.find(person=>person.id===memberId)||store.user;
-  const permissionRoute=route.startsWith('/inventory/')?'/inventory':route;
+  const permissionRoute=route.startsWith('/inventory/')?'/inventory':route.startsWith('/reports/')?'/reports':route;
   return member.role==='owner'||(member.permissions??roleDefaults[member.role]).includes(permissionRoute);
 };
 
@@ -115,10 +130,12 @@ function App() {
   const [settingsTab,setSettingsTab] = useState('General');
   const [period,setPeriod] = useState('7 days');
   const [mobileNav,setMobileNav] = useState(false);
+  const [reportsExpanded,setReportsExpanded] = useState(()=>path.startsWith('/reports'));
   const [receiptOrder,setReceiptOrder] = useState<Order|null>(null);
   useEffect(()=>{ if(store) localStorage.setItem('gotecx-demo-store',JSON.stringify(store)); else localStorage.removeItem('gotecx-demo-store'); },[store]);
   useEffect(()=>{ if(toast){const t=setTimeout(()=>setToast(''),2800);return()=>clearTimeout(t);} return undefined; },[toast]);
   useEffect(()=>{if(store&&activeMemberId&&path!=='/login'&&!memberCanOpen(store,activeMemberId,path)){setPath('/home');return;}if(store&&(path==='/'||path==='/register'||(path==='/login'&&!!activeMemberId)))setPath('/home');if(store&&!activeMemberId&&path!=='/login')setPath('/login');if(!store&&!['/login','/register'].includes(path))setPath('/login');},[store,path,setPath,activeMemberId]);
+  useEffect(()=>{if(path.startsWith('/reports/'))setReportsExpanded(true);},[path]);
   const update = (key:keyof Store, value:unknown) => setStore(s=>s?({...s,[key]:value} as Store):s);
   const notify = (message:string)=>setToast(message);
   const logout = ()=>{setActiveMemberId(null);localStorage.removeItem('gotecx-demo-session');setPath('/login');setToast('Signed out of this browser.');};
@@ -146,7 +163,8 @@ function App() {
 
   if(!store || !activeMemberId) return <AuthPage path={path} setPath={setPath} setStore={setStore} currentStore={store} setActiveMemberId={memberId=>{setActiveMemberId(memberId);localStorage.setItem('gotecx-demo-session',memberId);}} notify={notify}/>;
   const activeMember=store.team.find(member=>member.id===activeMemberId)||store.user;
-  const canAccess=(route:string)=>activeMember.role==='owner'||(activeMember.permissions??roleDefaults[activeMember.role]).includes(route.startsWith('/inventory/')?'/inventory':route);
+  const canAccess=(route:string)=>route==='/notifications'||activeMember.role==='owner'||(activeMember.permissions??roleDefaults[activeMember.role]).includes(route.startsWith('/inventory/')?'/inventory':route.startsWith('/reports/')?'/reports':route);
+  const welcomeRead=store.settings.welcomeNotificationRead==='true';
   const navItems=[...navMain,['Support','/support',LifeBuoy] as const];
   const navCounts:Record<string,{value:number;label:string}>={
     '/orders':{value:store.orders.length,label:'orders'},
@@ -156,7 +174,15 @@ function App() {
   return <div className="app-frame">
     <aside className={`sidebar ${mobileNav?'mobile-show':''}`}>
       <div className="brand"><div className="brand-mark">G</div> gotecx<span style={{fontWeight:400,color:'#8e9994'}}>POS</span></div>
-       <div className="nav-group">{navItems.filter(([,href])=>canAccess(href as string)).map(([label,href,Icon])=>{const count=navCounts[href as string];return <Link href={href as string} className={`nav-link ${path===href||(href==='/inventory'&&path.startsWith('/inventory/'))?'active':''}`} key={href as string} onClick={()=>setMobileNav(false)} data-testid={`link-nav-${String(label).toLowerCase().replaceAll(' ','-')}`}><Icon size={16}/><span>{label as string}</span>{href==='/inventory'&&<span className="advanced-nav-pro">PRO</span>}{count&&count.value>0&&<span className="nav-count" aria-label={`${count.value} ${count.label}`}>{count.value>99?'99+':count.value}</span>}</Link>})}</div>
+       <div className="nav-group">
+         {navItems.filter(([,href])=>canAccess(href as string)).map(([label,href,Icon])=>{const count=navCounts[href as string];return <Link href={href as string} className={`nav-link ${path===href||(href==='/inventory'&&path.startsWith('/inventory/'))?'active':''}`} key={href as string} onClick={()=>setMobileNav(false)} data-testid={`link-nav-${String(label).toLowerCase().replaceAll(' ','-')}`}><Icon size={16}/><span>{label as string}</span>{href==='/inventory'&&<span className="advanced-nav-pro">PRO</span>}{count&&count.value>0&&<span className="nav-count" aria-label={`${count.value} ${count.label}`}>{count.value>99?'99+':count.value}</span>}</Link>})}
+         {canAccess('/reports')&&<div className="reports-nav-section">
+           <button type="button" className={`nav-link reports-nav-toggle ${path.startsWith('/reports/')?'active':''}`} aria-expanded={reportsExpanded} aria-controls="reports-subnav" data-testid="button-toggle-reports" onClick={()=>setReportsExpanded(value=>!value)}>
+             <BarChart3 size={16}/><span>Reports</span><ChevronDown className={`reports-chevron ${reportsExpanded?'is-open':''}`} size={14}/>
+           </button>
+           {reportsExpanded&&<div className="reports-subnav" id="reports-subnav">{reportNavItems.map(([label,href])=><Link href={href} className={`reports-subnav-link ${path===href?'active':''}`} key={href} onClick={()=>{setReportsExpanded(true);setMobileNav(false);}} data-testid={`link-nav-${href.split('/').pop()}`}>{label}</Link>)}</div>}
+         </div>}
+       </div>
       {canAccess('/content')&&<><div className="nav-caption">Sales channels</div><Link href="/content" className={`nav-link ${path==='/content'?'active':''}`} onClick={()=>setMobileNav(false)}><ShoppingBag size={16}/>Online storefront</Link></>}
       <div className="side-bottom">{canAccess('/settings')&&<Link href="/settings" className={`nav-link ${path==='/settings'?'active':''}`} onClick={()=>setMobileNav(false)}><Settings size={16}/>Settings</Link>}
         <button className="nav-link" data-testid="button-switch-staff" style={{width:'100%',border:0,background:'transparent',textAlign:'left'}} onClick={()=>{setMobileNav(false);logout();}}><div className="avatar">{initials(activeMember.name)}</div><span style={{minWidth:0,overflow:'hidden',textOverflow:'ellipsis'}}>{activeMember.name} · {activeMember.role}</span><ChevronDown size={14}/></button>
@@ -164,14 +190,28 @@ function App() {
     </aside>
     {mobileNav&&<button className="mobile-nav-scrim" aria-label="Close navigation menu" onClick={()=>setMobileNav(false)}/>}
     <main className="workspace">
-       <header className="topbar"><div className="topbar-left"><button className="mobile-menu" onClick={()=>setMobileNav(!mobileNav)} aria-label="Toggle navigation">{mobileNav?<X size={19}/>:<Menu size={19}/>}</button><div className="searchbar"><Search size={14}/><input aria-label="Search your store" placeholder="Search your store" value={search} onChange={e=>setSearch(e.target.value)}/><span style={{fontSize:10,color:'#939995'}}>⌘ K</span></div></div><div style={{display:'flex',alignItems:'center',gap:16}}><span className="topbar-location muted" style={{fontSize:11}}><Globe2 size={14} style={{verticalAlign:'middle',marginRight:5}}/>Monrovia · {store.business.currency}</span><button className="button small" onClick={()=>{const messages:string[]=[];const low=store.products.filter(p=>p.active&&p.stock<=p.lowStockThreshold);if(store.settings['notify-0']!=='false'&&low.length)messages.push(`${low.length} low-stock item${low.length===1?'':'s'}`);const today=new Date().toDateString();const sales=store.orders.filter(o=>o.status==='completed'&&new Date(o.createdAt).toDateString()===today);if(store.settings['notify-1']!=='false')messages.push(`${sales.length} sale${sales.length===1?'':'s'} today · ${money(sales.reduce((sum,o)=>sum+o.total,0),store.business.currency)}`);const newCustomers=store.customers.filter(c=>c.createdAt&&new Date(c.createdAt).toDateString()===today);if(store.settings['notify-2']!=='false'&&newCustomers.length)messages.push(`${newCustomers.length} new customer profile${newCustomers.length===1?'':'s'}`);notify(messages.join(' · ')||'No new reminders.') }} aria-label="Notifications"><Bell size={14}/></button><div className="avatar">{initials(activeMember.name)}</div></div></header>
+        <header className="topbar">
+          <div className="topbar-left">
+            <button className="mobile-menu" onClick={()=>setMobileNav(!mobileNav)} aria-label="Toggle navigation">{mobileNav?<X size={19}/>:<Menu size={19}/>}</button>
+            <div className="searchbar"><Search size={14}/><input aria-label="Search your store" placeholder="Search your store" value={search} onChange={e=>setSearch(e.target.value)}/><span style={{fontSize:10,color:'#939995'}}>⌘ K</span></div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:16}}>
+            <span className="topbar-location muted" style={{fontSize:11}}><Globe2 size={14} style={{verticalAlign:'middle',marginRight:5}}/>Monrovia · {store.business.currency}</span>
+            <button type="button" className="notification-trigger" onClick={()=>setPath('/notifications')} aria-label={welcomeRead?'Notifications':'Notifications, 1 unread'} title="Open notifications" data-testid="button-open-notifications">
+              <Bell size={15}/>{!welcomeRead&&<span className="notification-count" aria-label="1 unread notification">1</span>}
+            </button>
+            <div className="avatar">{initials(activeMember.name)}</div>
+          </div>
+        </header>
       <section className="content">
         {path==='/home'&&<Dashboard store={store} setPath={setPath} notify={notify}/>}
         {path==='/products'&&<Products store={store} update={update} search={search} setSearch={setSearch} openForm={openForm} confirmDelete={confirmDelete} notify={notify}/>}
         {path==='/customers'&&<Customers store={store} update={update} search={search} setSearch={setSearch} openForm={openForm} confirmDelete={confirmDelete}/>}
-        {path==='/orders'&&<Orders store={store} update={update} search={search} setSearch={setSearch} openForm={openForm} setReceiptOrder={setReceiptOrder} notify={notify}/>}
+        {path==='/orders'&&<Orders store={store} update={update} search={search} setSearch={setSearch} openForm={openForm} setReceiptOrder={setReceiptOrder} employeeId={activeMember.id} notify={notify}/>}
          {path==='/purchases'&&<PurchasingPage suppliers={store.suppliers} purchaseOrders={store.purchaseOrders} products={store.products} stockMovements={store.stockMovements} currency={store.business.currency} search={search} setSearch={setSearch} setPath={setPath} updateSuppliers={value=>update('suppliers',value)} updatePurchaseOrders={value=>update('purchaseOrders',value)} updateProducts={value=>update('products',value)} updateStockMovements={value=>update('stockMovements',value)} openForm={openForm} confirmDelete={confirmDelete} notify={notify}/>}
-        {(path==='/inventory'||path.startsWith('/inventory/'))&&<AdvancedInventory path={path} setPath={setPath} products={store.products} stockMovements={store.stockMovements} currency={store.business.currency} onProductsChange={products=>update('products',products)} onStockMovementsChange={movements=>update('stockMovements',movements)} notify={notify}/>}
+        {(path==='/inventory'||path.startsWith('/inventory/'))&&<AdvancedInventory path={path} setPath={setPath} products={store.products} stockMovements={store.stockMovements} currency={store.business.currency} onProductsChange={products=>update('products',products)} onStockMovementsChange={movements=>update('stockMovements',movements)} hasProPaymentMethod={!!store.settings.proPaymentMethodLabel} onManagePayment={()=>{setSettingsTab('Plan');setPath('/settings');setMobileNav(false);}} notify={notify}/>}
+        {path.startsWith('/reports/')&&<ReportsPage path={path} setPath={setPath} store={store} onShowReceipt={setReceiptOrder}/>}
+        {path==='/notifications'&&<NotificationsPage store={store} welcomeRead={welcomeRead} onMarkWelcomeRead={()=>update('settings',{...store.settings,welcomeNotificationRead:'true'})}/>}
         {path==='/cash-register'&&<CashRegister store={store} update={update} openForm={openForm}/>}
         {path==='/discounts'&&<Discounts store={store} update={update} search={search} setSearch={setSearch} openForm={openForm} confirmDelete={confirmDelete}/>}
         {path==='/analytics'&&<Analytics store={store} period={period} setPeriod={setPeriod}/>}
@@ -180,7 +220,7 @@ function App() {
         {path==='/markets'&&<Markets store={store} update={update} openForm={openForm} notify={notify}/>}
         {path==='/growth'&&<Growth setPath={setPath} store={store}/>}
         {path==='/content'&&<Content setPath={setPath} store={store} update={update} openForm={openForm} notify={notify}/>}
-         {path==='/settings'&&<SettingsPage store={store} update={update} tab={settingsTab} setTab={setSettingsTab} setPath={setPath} exportBackup={exportBackup} importBackup={importBackup} notify={notify}/>}
+          {path==='/settings'&&<SettingsPage store={store} update={update} tab={settingsTab} setTab={setSettingsTab} setPath={setPath} exportBackup={exportBackup} importBackup={importBackup} notify={notify}/>}
          {path==='/support'&&<SupportPage store={store} notify={notify}/>}
       </section>
      <div className="demo-footer">Browser-local demo only · Authentication, PIN checks, permissions, and support requests are not server-backed or production security. Data is not shared across devices.</div>
@@ -225,7 +265,7 @@ function AuthPage({path,setPath,setStore,currentStore,setActiveMemberId,notify}:
     if(register&&String(fd.get('password')||'').length<8){setError('Use at least 8 characters for the local demo password.');return;}
     const business:Business={id:id(),name:businessName,category:String(fd.get('category')||'Retail'),country:'Liberia',county:String(fd.get('county')||'Montserrado'),city:String(fd.get('city')||'Monrovia'),currency:'LRD',timezone:'Africa/Monrovia'};
     const user:TeamMember={id:id(),name,email,role:'owner'};
-     const store:Store={business,user,products:register?demoProducts:[],customers:register?[{id:'c1',name:'Massa K. Johnson',phone:'+231 77 234 9182',email:'massa@example.com',county:'Montserrado',notes:'Regular customer'},{id:'c2',name:'Samuel Toe',phone:'+231 88 510 2731',email:'',county:'Margibi',notes:''}]:[],orders:register?seedOrders:[],discounts:[],team:[user],settings:{},stockMovements:[],shifts:[],suppliers:[],purchaseOrders:[]};
+      const store:Store={business,user,products:register?demoProducts:[],customers:register?[{id:'c1',name:'Massa K. Johnson',phone:'+231 77 234 9182',email:'massa@example.com',county:'Montserrado',notes:'Regular customer'},{id:'c2',name:'Samuel Toe',phone:'+231 88 510 2731',email:'',county:'Margibi',notes:''}]:[],orders:register?seedOrders.map(order=>({...order,employeeId:user.id})):[],discounts:[],team:[user],settings:{},stockMovements:[],shifts:[],suppliers:[],purchaseOrders:[]};
     setStore(store);setActiveMemberId(user.id);setPath('/home');notify(register?'Your Liberia store is ready.':'Welcome to your demo workspace.');
   };
   return (
@@ -405,7 +445,7 @@ function Customers({store,update,search,setSearch,openForm,confirmDelete}:{store
   const addCustomer=()=>openForm('Add customer',customerFields,{county:store.settings.defaultCounty||'Montserrado'},v=>save(v));
   return <><PageHead title="Customers" subtitle="Review customer details and purchase history." action={<div className="page-actions"><button className="button" onClick={exportCustomers}><Download size={14}/> Export CSV</button><button className="button primary" onClick={addCustomer}><Plus size={15}/> Add customer</button></div>}/><div className="panel"><div className="toolbar"><div className="searchbar"><Search size={14}/><input placeholder="Search customers" value={search} onChange={e=>setSearch(e.target.value)}/></div>{['All','Returning','No sales'].map(f=><button key={f} className={`button small ${filter===f?'primary':''}`} onClick={()=>setFilter(f)}>{f}</button>)}<span className="muted" style={{fontSize:11}}>{items.length} customers</span></div>{items.length?<div className="table-wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Email</th><th>County</th><th>Orders</th><th>Total spent</th><th>Notes</th><th></th></tr></thead><tbody>{items.map(c=>{const s=stats(c);return <tr key={c.id}><td><div style={{display:'flex',alignItems:'center',gap:9}}><div className="avatar">{initials(c.name)}</div><span className="table-primary">{c.name}</span></div></td><td>{c.phone}</td><td>{c.email||'—'}</td><td>{c.county}</td><td>{s.count}</td><td>{money(s.spent,store.business.currency)}</td><td>{c.notes||'—'}</td><td><button className="button small" onClick={()=>openForm('Edit customer',customerFields,c,v=>save(v,c))}>Edit</button> <button className="button small danger" onClick={()=>confirmDelete('customer',()=>update('customers',store.customers.filter(x=>x.id!==c.id)))}>Delete</button></td></tr>})}</tbody></table></div>:<Empty title={store.customers.length?'No matching customers':'Your customer list starts here'} text="Save customer details to make repeat visits easier." action="Add customer" onClick={addCustomer}/>}</div></>;
 }
-function Orders({store,update,search,setSearch,openForm,setReceiptOrder,notify}:{store:Store;update:(k:keyof Store,v:unknown)=>void;search:string;setSearch:(s:string)=>void;openForm:OpenForm;setReceiptOrder:(o:Order)=>void;notify:(s:string)=>void}) {
+function Orders({store,update,search,setSearch,openForm,setReceiptOrder,employeeId,notify}:{store:Store;update:(k:keyof Store,v:unknown)=>void;search:string;setSearch:(s:string)=>void;openForm:OpenForm;setReceiptOrder:(o:Order)=>void;employeeId:string;notify:(s:string)=>void}) {
   const [filter,setFilter]=useState('All');
   const [cart,setCart]=useState<Record<string,number>>({});
   const [customerId,setCustomerId]=useState('');
@@ -452,7 +492,7 @@ function Orders({store,update,search,setSearch,openForm,setReceiptOrder,notify}:
     if(!customerDisabled&&customerRequired&&!customerId){notify('Choose a customer to continue with this sale.');return;}
     const orderId=`GC-${1000+store.orders.length+1}`;
     const items=cartItems.map(({product,qty})=>({productId:product.id,name:product.name,quantity:qty,unitPrice:product.price}));
-    const order:Order={id:orderId,createdAt:new Date().toISOString(),customerId:customerDisabled?null:customerId||null,items,subtotal:round(subtotal),discount:discountAmount,total,currency,paymentMethod:selectedPayment,status:'completed',discountCode:appliedDiscount?.code,taxAmount,deliveryFee,fulfillment};
+    const order:Order={id:orderId,createdAt:new Date().toISOString(),customerId:customerDisabled?null:customerId||null,items,subtotal:round(subtotal),discount:discountAmount,total,currency,paymentMethod:selectedPayment,status:'completed',discountCode:appliedDiscount?.code,taxAmount,deliveryFee,fulfillment,employeeId};
     update('orders',[order,...store.orders]);
     update('products',store.products.map(p=>({...p,stock:Math.max(0,p.stock-(cart[p.id]||0))})));
     update('stockMovements',[...store.stockMovements,...cartItems.map(({product,qty})=>({id:id(),productId:product.id,productName:product.name,delta:-qty,reason:`Sale ${orderId}`,createdAt:order.createdAt}))]);
@@ -686,7 +726,20 @@ function SettingsPage({store,update,tab,setTab,setPath,exportBackup,importBackup
    const titleText:Record<string,string>={General:'Business details and store defaults',Plan:'Choose a plan for your business',Billing:'Billing contact and invoices',Users:'People with access to this store',Payments:'Ways customers can pay',Checkout:'A smooth counter checkout',Receipts:'Customize what customers take home', 'Customer accounts':'Customer profile preferences','Shipping and delivery':'Local pickup and delivery options','Taxes and duties':'Tax settings for your records',Locations:'Business locations','Markets':'Country, currency and time zone',Apps:'Extensions for your workspace','Sales channels':'Where you sell','Domains':'Your online address',Notifications:'Updates for your business'};
   return <><PageHead title="Settings" subtitle="Set up the details and preferences behind your workspace."/><div className="settings-layout"><div className="panel settings-nav">{settingsItems.map(x=><button key={x} aria-current={tab===x?'page':undefined} className={tab===x?'selected':''} onClick={()=>setTab(x)}>{x}</button>)}</div><div className="settings-content"><div className="field settings-mobile-select"><label htmlFor="settings-section-select">Settings section</label><select id="settings-section-select" value={tab} onChange={e=>setTab(e.target.value)}>{settingsItems.map(item=><option key={item}>{item}</option>)}</select></div><div className="panel"><div className="panel-head"><div><h3 className="panel-title">{tab}</h3><span className="muted" style={{fontSize:11}}>{titleText[tab]}</span></div></div><div className="panel-body">
     {tab==='General'&&<><h4 style={{fontSize:12,margin:'0 0 13px'}}>Business details</h4><div className="form-grid">{field('Business name','businessName')}{field('Business type','category','select',['Retail','Food & beverage','Beauty & personal care','Professional services','Handmade goods','Other'])}{field('Country','country','select',['Liberia'])}{field('County','county','select',counties)}{field('City / town','city')}{field('Store currency','currency','select',['LRD','USD'])}{field('Timezone','timezone','select',['Africa/Monrovia'])}</div><div className="callout">Liberia is fixed as your business country. Your local timezone is Africa/Monrovia.</div><div className="settings-tools"><div><strong>Workspace data</strong><p className="muted">Download a JSON backup or restore one from this device. Restoring replaces the current browser copy.</p></div><div className="page-actions"><button className="button" onClick={exportBackup}><Download size={14}/> Download backup</button><label className="button file-button"><Upload size={14}/> Restore backup<input type="file" accept=".json,application/json" onChange={e=>{const file=e.target.files?.[0];if(file)void importBackup(file);e.target.value='';}}/></label></div></div></>}
-    {tab==='Plan'&&<><div className="callout" style={{marginBottom:17}}>You are using the Gotecx demo plan. All features in this workspace are available locally.</div><div className="panel" style={{padding:18}}><div style={{display:'flex',justifyContent:'space-between'}}><div><h3 style={{margin:'0 0 6px',fontSize:15}}>Local demo</h3><span className="muted" style={{fontSize:11}}>No subscription or payment required</span></div><span className="badge">Current plan</span></div></div></>}
+     {tab==='Plan'&&<>
+       <div className="callout" style={{marginBottom:17}}>You are using the Gotecx demo plan. All features in this workspace are available locally.</div>
+       <div className="panel pro-plan-card">
+         <div className="pro-plan-card-heading">
+           <div><h3>Local demo</h3><span>No subscription or payment required</span></div>
+           <span className="badge">Current plan</span>
+         </div>
+         <div className="pro-plan-offer">
+           <div><span className="pro-plan-eyebrow">FEATURE PREVIEW</span><h4>Advanced Inventory Pro</h4><p>Explore the Pro inventory tools and trial preview.</p></div>
+           <div className="pro-plan-offer-action"><strong>$99 <small>/ year</small></strong><button type="button" className="button small" data-testid="button-view-pro-features" onClick={()=>setPath('/inventory')}>View Pro features</button></div>
+         </div>
+       </div>
+       <ProPaymentMethods settings={store.settings} onSave={settings=>update('settings',settings)} notify={notify}/>
+     </>}
     {tab==='Billing'&&<><div className="callout" style={{marginBottom:16}}>Billing is not connected in this demo. These preferences are stored in your browser only.</div><div className="form-grid">{field('Billing contact name','billingName')}{field('Billing email','billingEmail','email')}{field('Business address','billingAddress')}</div></>}
     {tab==='Users'&&<><div className="callout" style={{marginBottom:16}}>Local team profiles only. No account invitations or shared access are provided.</div><div className="cart-row"><span>Team members</span><strong>{store.team.length}</strong></div><div className="settings-tools"><div><strong>Manage team profiles</strong><p className="muted">Add local staff profiles and assign a demo role. These roles do not create separate logins.</p></div><button className="button" onClick={()=>setPath('/team')}>Open team management</button></div></>}
     {tab==='Payments'&&<><div className="callout" style={{marginBottom:16}}>No real payment provider is connected. Select the methods you accept at your counter.</div>{['Cash','Mobile money','Card','Bank transfer'].map((x,i)=><label key={x} className="cart-row" style={{cursor:'pointer'}}><span>{x}</span><input type="checkbox" checked={(draft[`payment-${i}`]??store.settings[`payment-${i}`]??(i<2?'true':'false'))==='true'} onChange={e=>set(`payment-${i}`,String(e.target.checked))}/></label>)}</>}

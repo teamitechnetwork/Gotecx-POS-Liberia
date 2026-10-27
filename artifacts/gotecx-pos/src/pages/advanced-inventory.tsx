@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import {
   Activity, ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Barcode, Boxes, CalendarDays,
-  Check, ClipboardCheck, Factory, FileClock, MapPin, Package, PackageCheck, Plus,
+  Check, ClipboardCheck, CreditCard, Factory, FileClock, MapPin, Package, PackageCheck, Plus,
   Printer, Search, SlidersHorizontal, Sparkles, Tags, Trash2, Truck, WalletCards,
 } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
@@ -17,6 +17,8 @@ type Props = {
   currency: 'LRD' | 'USD';
   onProductsChange: (products: Product[]) => void;
   onStockMovementsChange: (movements: StockMovement[]) => void;
+  hasProPaymentMethod: boolean;
+  onManagePayment: () => void;
   notify: (message: string) => void;
 };
 type Transfer = { id: string; productId: string; quantity: number; from: string; to: string; status: 'Draft' | 'In transit' | 'Received'; createdAt: string };
@@ -66,7 +68,7 @@ function ProductSelect({ products, value, onChange, label = 'Product' }: { produ
   return <Field label={label}><select required value={value} onChange={e => onChange(e.target.value)}><option value="">Choose a product</option>{products.map(p => <option value={p.id} key={p.id}>{p.name} · {p.sku} · {p.stock} on hand</option>)}</select></Field>;
 }
 
-export default function AdvancedInventory({ path, setPath, products, stockMovements, currency, onProductsChange, onStockMovementsChange, notify }: Props) {
+export default function AdvancedInventory({ path, setPath, products, stockMovements, currency, onProductsChange, onStockMovementsChange, hasProPaymentMethod, onManagePayment, notify }: Props) {
   const [transfers, setTransfers] = useState<Transfer[]>(() => safeLoad('transfers', products[0] ? [{ id: 'TR-DEMO-01', productId: products[0].id, quantity: 3, from: locations[0], to: locations[1], status: 'In transit', createdAt: new Date(Date.now() - 86400000).toISOString() }] : []));
   const [counts, setCounts] = useState<Count[]>(() => safeLoad('counts', []));
   const [recipes, setRecipes] = useState<Recipe[]>(() => safeLoad('recipes', products.length > 1 ? [{ id: 'REC-DEMO-01', outputId: products[0].id, outputQty: 1, ingredients: [{ productId: products[1].id, quantity: 1 }] }] : []));
@@ -292,7 +294,7 @@ export default function AdvancedInventory({ path, setPath, products, stockMoveme
     <section className="ai-hero">
       <div className="ai-hero-orbit ai-orbit-one" /><div className="ai-hero-orbit ai-orbit-two" />
       <div className="ai-hero-copy"><span className="ai-plan-tag"><Sparkles size={13} /> ADVANCED INVENTORY PRO</span><h1>Inventory, in full view.</h1><p>Know what’s on hand, what’s moving, and what needs attention — before it slows checkout.</p>
-        <div className="ai-hero-actions">{trial ? <span className="ai-trial-active"><Check size={16} /> 14-day demo trial active</span> : <button className="ai-button ai-button-green" onClick={() => { setTrial(true); notify('14-day demo trial activated locally. No payment or subscription was created.'); }}>Start 14-day free trial <ArrowUpRight size={15} /></button>}<span className="ai-price">$99 <small>/ year</small></span></div>
+        <div className="ai-hero-actions">{trial ? <span className="ai-trial-active"><Check size={16} /> 14-day demo trial active</span> : <button className="ai-button ai-button-green" onClick={() => { setTrial(true); notify('14-day demo trial activated locally. No payment or subscription was created.'); }}>Start 14-day free trial <ArrowUpRight size={15} /></button>}<button type="button" className="ai-button ai-payment-button" data-testid="button-manage-pro-payment" onClick={onManagePayment}><CreditCard size={15} />{hasProPaymentMethod ? 'Manage payment method' : 'Add payment method'}</button><span className="ai-price">$99 <small>/ year</small></span></div>
         <small className="ai-demo-note">Local demo only. Activating this trial does not create a payment or subscription.</small>
       </div>
       <div className="ai-hero-art" aria-hidden="true"><div className="ai-art-window"><div className="ai-art-top"><span /><span /><span /></div><div className="ai-art-line"><b /><i /><strong /></div><div className="ai-art-line short"><b /><i /><strong /></div><div className="ai-art-line"><b /><i /><strong /></div><div className="ai-art-foot"><Activity size={16} /><span>STOCK FLOW</span><em>+12.8%</em></div></div><div className="ai-art-stamp"><Boxes size={27} /><span>LIVE<br />STOCK</span></div></div>
